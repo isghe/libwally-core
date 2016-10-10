@@ -83,6 +83,7 @@ for f in (
     ('wally_pbkdf2_hmac_sha512', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_ulong, c_void_p, c_ulong]),
     ('wally_scrypt', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_uint, c_uint, c_void_p, c_ulong]),
     ('wally_secp_randomize', c_int, [c_void_p, c_ulong]),
+    ('wally_ec_sign_compact', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_void_p, c_ulong]),
     ):
 
     def bind_fn(name, res, args):
@@ -141,5 +142,7 @@ def h(s):
     return hexlify(s)
 
 def make_cbuffer(hex_in):
+    if hex_in is None:
+        return None, 0
     hex_len = len(hex_in) // 2
     return unhexlify(hex_in), hex_len

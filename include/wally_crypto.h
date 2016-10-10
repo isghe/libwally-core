@@ -271,4 +271,36 @@ WALLY_CORE_API int wally_pbkdf2_hmac_sha512(
     unsigned char *bytes_out,
     size_t len);
 
+/** The length of a private key used for EC signing */
+#define EC_PRIVATE_KEY_LEN 32
+/** The length of a message hash to EC sign */
+#define EC_MESSAGE_HASH_LEN 32
+/** The length of a signature produced by EC signing */
+#define EC_COMPACT_SIGNATURE_LEN 64
+
+/** Indicates that a signature using ECDSA/secpk2561 is required */
+#define EC_FLAG_ECDSA 0x1
+/** Indicates that a signature using EC-Schnorr-SHA256 is required */
+#define EC_FLAG_SCHNORR 0x2
+
+/**
+ * Sign a message hash with a private key, producing a compact signature.
+ *
+ * @priv_key: The private key to sign with.
+ * @priv_key_len: The length of @priv_key in bytes. Must be @EC_PRIVATE_KEY_LEN.
+ * @bytes_in: The message hash to sign.
+ * @len_in: The length of @bytes_in in bytes. Must be @EC_MESSAGE_HASH_LEN.
+ * @flags: EC_FLAG_ flag values indicating desired behaviour.
+ * @bytes_out: Destination for the resulting compact signature.
+ * @len: The length of @bytes_out in bytes. Must be @EC_COMPACT_SIGNATURE_LEN.
+ */
+WALLY_CORE_API int wally_ec_sign_compact(
+    const unsigned char *priv_key,
+    size_t priv_key_len,
+    const unsigned char *bytes_in,
+    size_t len_in,
+    uint32_t flags,
+    unsigned char *bytes_out,
+    size_t len);
+
 #endif /* LIBWALLY_CORE_CRYPTO_H */
