@@ -39,10 +39,11 @@ int wally_ec_sign_compact(const unsigned char *priv_key, size_t priv_key_len,
     if (flags & EC_FLAG_SCHNORR)
         return WALLY_EINVAL;     /* Not implemented yet */
     else {
+        wally_ec_nonce_t nonce_fn = wally_ops()->ec_nonce_fn;
         secp256k1_ecdsa_signature sig;
 
         /* FIXME: Allow overriding of nonce function for testing */
-        if (!secp256k1_ecdsa_sign(ctx, &sig, bytes_in, priv_key, NULL, NULL)) {
+        if (!secp256k1_ecdsa_sign(ctx, &sig, bytes_in, priv_key, nonce_fn, NULL)) {
             if (secp256k1_ec_seckey_verify(ctx, priv_key))
                 return WALLY_ERROR; /* Nonce function failed */
             return WALLY_EINVAL; /* invalid priv_key */

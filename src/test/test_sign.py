@@ -18,6 +18,7 @@ class SignTests(unittest.TestCase):
 
         # Invalid inputs
         FLAGS_BOTH = FLAG_ECDSA | FLAG_SCHNORR
+        bad_priv = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD036'
         priv_ok, msg_ok, flags_ok = ('11' * 32), ('22' * 32), FLAG_ECDSA
         for c in [(None,        msg_ok,      flags_ok),         # Null priv_key
                   (('11' * 33), msg_ok,      flags_ok),         # Wrong priv_key len
