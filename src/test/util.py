@@ -20,11 +20,12 @@ wally_free_string.restype, wally_free_string.argtypes = None, [c_char_p]
 WALLY_OK, WALLY_ERROR, WALLY_EINVAL, WALLY_ENOMEM = 0, -1, -2, -3
 
 _malloc_fn_t = CFUNCTYPE(c_void_p, c_ulong)
+_ec_nonce_fn_t = CFUNCTYPE(c_int, c_void_p, c_void_p, c_void_p, c_void_p, c_void_p, c_uint)
 
 class operations(Structure):
     _fields_ = [('malloc_fn', _malloc_fn_t),
                 ('free_fn', c_void_p),
-                ('ec_nonce_fn', c_void_p)]
+                ('ec_nonce_fn', _ec_nonce_fn_t)]
 
 class ext_key(Structure):
     _fields_ = [('chain_code', c_ubyte * 32),
@@ -90,7 +91,8 @@ for f in (
     ('wally_pbkdf2_hmac_sha512', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_ulong, c_void_p, c_ulong]),
     ('wally_scrypt', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_uint, c_uint, c_void_p, c_ulong]),
     ('wally_secp_randomize', c_int, [c_void_p, c_ulong]),
-    ('wally_ec_sign_compact', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_void_p, c_ulong]),
+    ('wally_ec_sign_hash', c_int, [c_void_p, c_ulong, c_void_p, c_ulong, c_uint, c_void_p, c_ulong]),
+    ('wally_ec_private_key_verify', c_int, [c_void_p, c_ulong]),
     ('wally_get_operations', c_int, [POINTER(operations)]),
     ('wally_set_operations', c_int, [POINTER(operations)]),
     ):
@@ -184,5 +186,21 @@ def malloc_fail(failures):
                 _fail_malloc_at, _fail_malloc_counter = 0, 0
         return wrapped
     return decorator
+
+# Support for signing testing
+_fake_ec_nonce = None
+
+def set_fake_ec_nonce(nonce):
+    global _fake_ec_nonce
+    _fake_ec_nonce = nonce
+
+def _fake_ec_nonce_fn(nonce32, msg32, key32, algo16, data, attempt):
+    global _fake_ec_nonce
+    if _fake_ec_nonce is not None:
+        memmove(nonce32, _fake_ec_nonce, 32)
+        return 1
+    return _original_ops.ec_nonce_fn(nonce32, msg32, key32, algo16, data, attempt)
+
+_new_ops.ec_nonce_fn = _ec_nonce_fn_t(_fake_ec_nonce_fn)
 
 assert wally_set_operations(byref(_new_ops)) == WALLY_OK

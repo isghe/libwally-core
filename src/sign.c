@@ -11,7 +11,7 @@
 /* Check assumptions we expect to hold true */
 static void assert_assumptions(void)
 {
-    BUILD_ASSERT(sizeof(secp256k1_ecdsa_signature) == EC_COMPACT_SIGNATURE_LEN);
+    BUILD_ASSERT(sizeof(secp256k1_ecdsa_signature) == EC_SIGNATURE_LEN);
 }
 
 static bool is_valid_ec_type(uint32_t flags)
@@ -20,17 +20,32 @@ static bool is_valid_ec_type(uint32_t flags)
            ((flags & EC_FLAGS_TYPES) == EC_FLAG_SCHNORR);
 }
 
-int wally_ec_sign_compact(const unsigned char *priv_key, size_t priv_key_len,
-                          const unsigned char *bytes_in, size_t len_in,
-                          uint32_t flags,
-                          unsigned char *bytes_out, size_t len)
+
+int wally_ec_private_key_verify(const unsigned char *priv_key, size_t priv_key_len)
+{
+    secp256k1_context *ctx;
+
+    if (!priv_key || priv_key_len != EC_PRIVATE_KEY_LEN)
+        return WALLY_EINVAL;
+
+    if (!(ctx = (secp256k1_context *)secp_ctx()))
+        return WALLY_ENOMEM;
+
+    return secp256k1_ec_seckey_verify(ctx, priv_key) ? WALLY_OK : WALLY_EINVAL;
+}
+
+
+int wally_ec_sign_hash(const unsigned char *priv_key, size_t priv_key_len,
+                       const unsigned char *bytes_in, size_t len_in,
+                       uint32_t flags,
+                       unsigned char *bytes_out, size_t len)
 {
     secp256k1_context *ctx;
 
     if (!priv_key || priv_key_len != EC_PRIVATE_KEY_LEN ||
         !bytes_in || len_in != EC_MESSAGE_HASH_LEN ||
         !is_valid_ec_type(flags) || flags & ~EC_FLAGS_ALL ||
-        !bytes_out || len != EC_COMPACT_SIGNATURE_LEN)
+        !bytes_out || len != EC_SIGNATURE_LEN)
         return WALLY_EINVAL;
 
     if (!(ctx = (secp256k1_context *)secp_ctx()))
